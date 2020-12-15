@@ -1,36 +1,54 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions";
-import got from "got";
+// import got from "got";
 const OAuth = require("oauth");
 
-const GET_PUBLICATIONS_URL =
-  "https://medium.com/codestar-blog/latest?format=json";
+// const GET_PUBLICATIONS_URL =
+//   "https://medium.com/codestar-blog/latest?format=json";
 
-const SCREEN_NAME = "mdworld";
-const TWEET_COUNT = "10";
-const GET_RECENT_TWEETS_URL = `https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=${SCREEN_NAME}&count=${TWEET_COUNT}`;
+const {
+  TWITTER_CONSUMER_KEY,
+  TWITTER_APP_SECRET,
+  TWITTER_USER_TOKEN,
+  TWITTER_USER_SECRET,
+} = process.env;
+
+// const GET_RECENT_TWEETS_URL = `https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=${SCREEN_NAME}&count=${TWEET_COUNT}`;
+const GET_RECENT_TWEETS_URL_ROOT = `https://api.twitter.com/1.1/statuses/user_timeline.json?`;
 
 const authCallback = (context, headers) => {
   context.log("authCallback init");
   /* params: error, data, result */
   return (error, data) => {
-    context.log("authCallback response", error, data);
+    // context.log("authCallback response", error, data);
     try {
       if (error) {
         context.log(error);
-        throw new Error(`Auth failure GET_RECENT_TWEETS_URL ${error}`);
+        // throw new Error(`Auth failure GET_RECENT_TWEETS_URL ${error}`);
+        // context.res = {
+        //   status: 401,
+        //   body: "some error occurred",
+        // };
+        // TODO fix error handling
+        context.done(`Auth failure GET_RECENT_TWEETS_URL ${error.statusCode}`);
       }
       context.res = {
         // status: 200, /* Defaults to 200 */
-        body: JSON.stringify(data),
+        body: data, // JSON.stringify(data),
       };
       //   callback(null, {
       //     statusCode: 200,
       //     headers,
       //     body: JSON.stringify(data),
       //   });
-      //   context.done();
+      context.done();
     } catch (err) {
+      // TODO this catch is no longer needed?
       context.log(err);
+      context.res = {
+        status: 401,
+        body: "some error occurred",
+      };
+      context.done(err);
       //   callback(`Failed GET_RECENT_TWEETS_URL ${err}`);
     }
   };
@@ -69,10 +87,11 @@ const httpTrigger: AzureFunction = function (
   req: HttpRequest
 ): void {
   context.log("HTTP trigger function processed a request.");
-  const name = req.query.name || (req.body && req.body.name);
-  const responseMessage = name
-    ? "Hello, " + name + ". This HTTP triggered function executed successfully."
-    : "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.";
+    const screenName = req.query.screenname || (req.body && req.body.screenname);
+    const count = req.query.count || (req.body && req.body.count);
+  //   const responseMessage = name
+  //     ? "Hello, " + name + ". This HTTP triggered function executed successfully."
+  //     : "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.";
 
   // TODO This medium API no longer works, fix! Needs authentication
   //   const response = await got(GET_PUBLICATIONS_URL);
@@ -95,12 +114,11 @@ const httpTrigger: AzureFunction = function (
   const headers = {};
 
   oauth.get(
-    GET_RECENT_TWEETS_URL,
+    `${GET_RECENT_TWEETS_URL_ROOT}screen_name=${screenName}&count=${count}`,
     TWITTER_USER_TOKEN, // Twitter user token for this app
     TWITTER_USER_SECRET, // Twitter user secret for this app
     authCallback(context, headers)
   );
-  //   context.done();
 
   //   TODO unreachable
   //   context.res = {
