@@ -8,8 +8,6 @@ const {
   TWITTER_USER_SECRET,
 } = process.env;
 
-// TODO deploy
-
 // const GET_RECENT_TWEETS_URL = `https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=${SCREEN_NAME}&count=${TWEET_COUNT}`;
 const GET_RECENT_TWEETS_URL_ROOT = `https://api.twitter.com/1.1/statuses/user_timeline.json?`;
 
